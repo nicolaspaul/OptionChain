@@ -9,6 +9,10 @@ function selectOptionType(strikePrice, marketPrice) {
     return strikePrice < marketPrice ? "Call" : "Put";
 }
 
+app.get('/', (req, res) => {
+  res.send('Welcome to OptionChain API');
+});
+
 app.get('/api/option-chain', async (req, res) => {
     const { symbol, expiry } = req.query;
 
