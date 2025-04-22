@@ -43,9 +43,10 @@ app.get('/api/option-chain', async (req, res) => {
                 'User-Agent': 'Mozilla/5.0',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Referer': 'https://www.nseindia.com/',
-                'Accept': 'application/json',
+                'Accept': 'application/json'
             }
-        });res.json(response.data);
+        });
+        res.json(response.data);
     } catch (error) {
         console.error('Backend error:', error.message);
         res.status(500).json({ error: 'Failed to fetch data' });
