@@ -262,10 +262,15 @@
         // // Serve static files from the 'public' directory
         // app.use(express.static(path.join(__dirname, 'public')));
 
-        // Just call your backend
-        axios.get('/api/fetch-nse')
-            .then(res => console.log(res.data));
+        // Just call your backend - 22 April
+        // axios.get('/api/fetch-nse')
+        //     .then(res => console.log(res.data));
 
+        fetch('/api/option-chain')
+            .then(res => res.json())
+            .then(data => console.log(data))
+            .catch(err => console.error('Frontend fetch error:', err));
+        
         // VIX Thresholds
         const VIX_THRESHOLDS = {
             HIGH: 20,    // Above this is considered high volatility
