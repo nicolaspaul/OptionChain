@@ -10,6 +10,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/api/fetch-nse', async (req, res) => {
+  const response = await axios.get('https://www.nseindia.com/option-chain', {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',  // okay to set in backend
+      'Accept': 'application/json'
+    }
+  });
+  res.send(response.data);
+});
+
+
 function selectOptionType(strikePrice, marketPrice) {
     return strikePrice < marketPrice ? "Call" : "Put";
 }
