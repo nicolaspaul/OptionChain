@@ -46,12 +46,7 @@ app.get('/api/option-chain', async (req, res) => {
                 'Accept': 'application/json'
             }
         });
-        res.json(response.data);
-    } catch (error) {
-        console.error('Backend error:', error.message);
-        res.status(500).json({ error: 'Failed to fetch data' });
-    }
-});
+        
 
         const records = response.data.records;
         if (!records || !records.data) {
@@ -81,12 +76,20 @@ app.get('/api/option-chain', async (req, res) => {
             }
         }));
 
-        res.json(optionData);
-    // } catch (error) {
-    //     console.error('Error fetching data:', error);
-    //     res.status(500).json({ error: 'Failed to fetch data from NSE API.' });
-    // }
-//});
+        res.json(response.data);
+    } catch (error) {
+        console.error('Backend error:', error.message);
+        res.status(500).json({ error: 'Failed to fetch data' });
+    }
+});
+
+//         res.json(optionData);
+//     // } catch (error) {
+//     //     console.error('Error fetching data:', error);
+//     //     res.status(500).json({ error: 'Failed to fetch data from NSE API.' });
+//     // }
+// //});
+        
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
