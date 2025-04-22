@@ -1,17 +1,22 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 function selectOptionType(strikePrice, marketPrice) {
     return strikePrice < marketPrice ? "Call" : "Put";
 }
 
-app.get('/', (req, res) => {
-  res.send('Welcome to OptionChain API');
-});
+// app.get('/', (req, res) => {
+//   res.send('Welcome to OptionChain API');
+// });
 
 app.get('/api/option-chain', async (req, res) => {
     const { symbol, expiry } = req.query;
