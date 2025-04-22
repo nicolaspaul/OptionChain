@@ -10,15 +10,16 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/api/fetch-nse', async (req, res) => {
-  const response = await axios.get('https://www.nseindia.com/option-chain', {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',  // okay to set in backend
-      'Accept': 'application/json'
-    }
-  });
-  res.send(response.data);
-});
+//extra code, may need at some point - 22 April
+// app.get('/api/fetch-nse', async (req, res) => {
+//   const response = await axios.get('https://www.nseindia.com/option-chain', {
+//     headers: {
+//       'User-Agent': 'Mozilla/5.0',  // okay to set in backend
+//       'Accept': 'application/json'
+//     }
+//   });
+//   res.send(response.data);
+// });
 
 
 function selectOptionType(strikePrice, marketPrice) {
@@ -41,9 +42,15 @@ app.get('/api/option-chain', async (req, res) => {
             headers: {
                 'User-Agent': 'Mozilla/5.0',
                 'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': 'https://www.nseindia.com/'
+                'Referer': 'https://www.nseindia.com/',
+                'Accept': 'application/json',
             }
-        });
+        });res.json(response.data);
+    } catch (error) {
+        console.error('Backend error:', error.message);
+        res.status(500).json({ error: 'Failed to fetch data' });
+    }
+});
 
         const records = response.data.records;
         if (!records || !records.data) {
