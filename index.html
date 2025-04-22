@@ -291,8 +291,8 @@
         const pcrOIDisplay = document.getElementById("pcr-oi");
         const alertContainer = document.getElementById("alertContainer");
 
-        // Initialize the expiry date to next Thursday
-        function initializeExpiryDate() {
+        // Initialize the expiry date to next Thursday       //REMOVED BY TEJAS 2-04-2025 9.21, ADD LATER
+       /* function initializeExpiryDate() {
             const today = new Date();
             let expiryDate = new Date(today);
 
@@ -305,7 +305,7 @@
             // Format as YYYY-MM-DD for date input
             const formattedDate = expiryDate.toISOString().split('T')[0];
             document.getElementById("expiry").value = formattedDate;
-        }
+        }*/
 
         // Alert Manager Class
         class AlertManager {
