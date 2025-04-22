@@ -39,14 +39,13 @@ app.get('/api/option-chain', async (req, res) => {
 
     try {
         const response = await axios.get(`https://www.nseindia.com/api/option-chain-indices?symbol=${symbol}`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': 'https://www.nseindia.com/',
-                'Accept': 'application/json'
-            }
+            headers: {...}
         });
-        
+        //ADD BELOW QUERY IF WANTED       22/04/2025 09 :01 PM
+         //'User-Agent': 'Mozilla/5.0',
+            //    'Accept-Language': 'en-US,en;q=0.9',
+               // 'Referer': 'https://www.nseindia.com/',
+                //'Accept': 'application/json'
 
         const records = response.data.records;
         if (!records || !records.data) {
