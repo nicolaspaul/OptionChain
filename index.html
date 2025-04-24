@@ -54,9 +54,6 @@
         .negative-change {
             color: #dc3545;
         }
-        #current-time {
-            color: #007bff;
-        }
         .vix-high {
             color: #dc3545;
             font-weight: bold;
@@ -69,40 +66,152 @@
             color: #28a745;
             font-weight: bold;
         }
-        .alert-toast {
+        .alert-panel {
             position: fixed;
             top: 20px;
             right: 20px;
-            min-width: 300px;
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
             z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px;
         }
-        .toast-vix {
-            background-color: rgba(220, 53, 69, 0.1);
-            border-left: 4px solid #dc3545;
+        .alert-panel-header {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .toast-pcr {
-            background-color: rgba(13, 110, 253, 0.1);
-            border-left: 4px solid #0d6efd;
+        .alert-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        .toast-oi {
-            background-color: rgba(25, 135, 84, 0.1);
-            border-left: 4px solid #198754;
+        .alert-item-vix {
+            border-left-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.05);
+        }
+        .alert-item-pcr {
+            border-left-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        .alert-item-oi {
+            border-left-color: #198754;
+            background-color: rgba(25, 135, 84, 0.05);
+        }
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .alert-message {
+            font-size: 0.9rem;
+        }
+        .alert-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-align: right;
+        }
+        .alert-strike {
+            font-weight: bold;
+            color: #495057;
+        }
+        .clear-alerts {
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+        .market-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .market-open {
+            background-color: #28a745;
+        }
+        .market-closed {
+            background-color: #dc3545;
+        }
+        .market-preopen {
+            background-color: #ffc107;
+        }
+        .update-indicator {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .update-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(0, 123, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #007bff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .time-since {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        .time-container {
+            display: flex;
+            flex-direction: column;
+        }
+        .time-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .time-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .last-price-change {
+            color: #007bff;
+        }
+        .last-data-fetch {
+            color: #6c757d;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <!-- Alert container -->
-        <div id="alertContainer" class="alert-toast"></div>
+    <!-- Alert Panel -->
+    <div class="alert-panel">
+        <div class="alert-panel-header">
+            <span>Market Alerts</span>
+            <span class="clear-alerts" id="clearAlerts">Clear All</span>
+        </div>
+        <div id="alertContainer">
+            <!-- Alerts will be inserted here -->
+        </div>
+    </div>
 
+    <div class="container mt-4">
         <!-- Market Data Header -->
         <div class="row market-data-header">
             <div class="col-md-3">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-clock me-2"></i>
-                    <div>
-                        <div class="text-muted small">Last Update</div>
-                        <div id="current-time" class="market-data-value">-</div>
+                    <div class="time-container">
+                        <span class="time-label">Last Price Change</span>
+                        <span id="last-price-change" class="time-value last-price-change">-</span>
+                        <span class="time-label">Last Data Fetch</span>
+                        <span id="last-data-fetch" class="time-value last-data-fetch">-</span>
                     </div>
                 </div>
             </div>
@@ -183,7 +292,7 @@
             </div>
             <span class="ml-2">Fetching data every 2 minutes...</span>
             <div class="mt-2">
-                <span id="lastUpdate" class="badge badge-secondary ml-2">Last Update: -</span>
+                <span id="lastUpdate" class="badge badge-secondary ml-2">Last Fetch: -</span>
             </div>
         </div>
 
@@ -256,26 +365,25 @@
         let previousMetrics = null;
         let previousIndiaVIX = null;
         let nseCookies = null;
-        let lastUpdateTime = null;
+        let lastDataFetchTime = null;
+        let lastPriceChangeTime = null;
+        let lastMarketPrice = null;
+        let isFetching = false;
 
-        // const path = require('path');
-        // // Serve static files from the 'public' directory
-        // app.use(express.static(path.join(__dirname, 'public')));
-
-        // Just call your backend - 22 April
-        // axios.get('/api/fetch-nse')
-        //     .then(res => console.log(res.data));
-
-        fetch('/api/option-chain')
-            .then(res => res.json())
-            .then(data => console.log(data))
-            .catch(err => console.error('Frontend fetch error:', err));
-        
         // VIX Thresholds
         const VIX_THRESHOLDS = {
             HIGH: 20,    // Above this is considered high volatility
             MEDIUM: 15   // Between 15-20 is medium volatility
         };
+
+// <!--        // Market hours (in IST)-->
+// <!--        const MARKET_HOURS = {-->
+// <!--            PRE_OPEN_START: 9,    // 9:00 AM-->
+// <!--            PRE_OPEN_END: 9.15,   // 9:15 AM-->
+// <!--            OPEN: 9.16,          // 9:16 AM-->
+// <!--            CLOSE: 15.3,         // 3:30 PM-->
+// <!--            POST_CLOSE: 15.31     // 3:31 PM-->
+// <!--        };-->
 
         // DOM elements
         const dataForm = document.getElementById("dataForm");
@@ -285,26 +393,47 @@
         const loadingDiv = document.getElementById("loading");
         const lastUpdateBadge = document.getElementById("lastUpdate");
         const dataTableBody = document.getElementById("dataTableBody");
-        const currentTimeDisplay = document.getElementById("current-time");
         const marketPriceDisplay = document.getElementById("market-price");
         const indiaVIXDisplay = document.getElementById("india-vix");
         const pcrOIDisplay = document.getElementById("pcr-oi");
         const alertContainer = document.getElementById("alertContainer");
+        const clearAlertsBtn = document.getElementById("clearAlerts");
+        const lastPriceChangeDisplay = document.getElementById("last-price-change");
+        const lastDataFetchDisplay = document.getElementById("last-data-fetch");
 
-        // Initialize the expiry date to next Thursday       //REMOVED BY TEJAS 2-04-2025 9.21, ADD LATER
-       function initializeExpiryDate() {
+        // Initialize the expiry date to next Thursday
+        function initializeExpiryDate() {
             const today = new Date();
             let expiryDate = new Date(today);
 
             // Find next Thursday (NIFTY weekly expiry)
-            // expiryDate.setDate(today.getDate() + ((4 - today.getDay() + 7) % 7));
-            // if (expiryDate <= today) {
-            //     expiryDate.setDate(expiryDate.getDate() + 7);
-            // }
+            expiryDate.setDate(today.getDate() + ((4 - today.getDay() + 7) % 7));
+            if (expiryDate <= today) {
+                expiryDate.setDate(expiryDate.getDate() + 7);
+            }
 
             // Format as YYYY-MM-DD for date input
             const formattedDate = expiryDate.toISOString().split('T')[0];
             document.getElementById("expiry").value = formattedDate;
+        }
+
+        // Update time displays
+        function updateTimeDisplays(newMarketPrice) {
+            const now = new Date();
+
+            // Always update the last data fetch time
+            lastDataFetchTime = now;
+            lastDataFetchDisplay.textContent = now.toLocaleTimeString();
+
+            // Only update price change time if market price has changed
+            if (lastMarketPrice === null || newMarketPrice !== lastMarketPrice) {
+                lastPriceChangeTime = now;
+                lastMarketPrice = newMarketPrice;
+                lastPriceChangeDisplay.textContent = now.toLocaleTimeString();
+            }
+
+            // Update the loading badge with last fetch time
+            lastUpdateBadge.textContent = `Last Fetch: ${now.toLocaleTimeString()}`;
         }
 
         // Alert Manager Class
@@ -372,7 +501,7 @@
                     if (item.call.OI > 10000 && Math.abs(item.call.OIPctChange) > 30) {
                         alerts.push({
                             type: 'oi',
-                            title: `Large Call OI Change at ${item.strikePrice}`,
+                            title: `Large Call OI Change`,
                             message: `${item.call.OIPctChange > 0 ? '+' : ''}${item.call.OIPctChange.toFixed(2)}% (${formatChange(item.call.OIChange)})`,
                             timestamp: now,
                             strike: item.strikePrice
@@ -383,7 +512,7 @@
                     if (item.put.OI > 10000 && Math.abs(item.put.OIPctChange) > 30) {
                         alerts.push({
                             type: 'oi',
-                            title: `Large Put OI Change at ${item.strikePrice}`,
+                            title: `Large Put OI Change`,
                             message: `${item.put.OIPctChange > 0 ? '+' : ''}${item.put.OIPctChange.toFixed(2)}% (${formatChange(item.put.OIChange)})`,
                             timestamp: now,
                             strike: item.strikePrice
@@ -398,46 +527,57 @@
                 const alertId = `${alert.type}-${alert.timestamp.getTime()}-${alert.strike || ''}`;
                 if (this.alertsTriggered.has(alertId)) return;
 
-                const toast = document.createElement('div');
-                toast.className = `toast fade show alert-toast toast-${alert.type}`;
-                toast.role = 'alert';
-                toast.setAttribute('aria-live', 'assertive');
-                toast.setAttribute('aria-atomic', 'true');
-                toast.innerHTML = `
-                    <div class="toast-header">
-                        <strong class="mr-auto">${alert.title}</strong>
-                        <small>${alert.timestamp.toLocaleTimeString()}</small>
-                        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                const alertElement = document.createElement('div');
+                alertElement.className = `alert-item alert-item-${alert.type}`;
+                alertElement.innerHTML = `
+                    <div class="alert-title">
+                        <span>${alert.title}</span>
+                        ${alert.strike ? `<span class="alert-strike">${alert.strike}</span>` : ''}
                     </div>
-                    <div class="toast-body">${alert.message}</div>
+                    <div class="alert-message">${alert.message}</div>
+                    <div class="alert-time">${alert.timestamp.toLocaleTimeString()}</div>
                 `;
 
-                alertContainer.appendChild(toast);
+                // Insert new alert at the top
+                if (alertContainer.firstChild) {
+                    alertContainer.insertBefore(alertElement, alertContainer.firstChild);
+                } else {
+                    alertContainer.appendChild(alertElement);
+                }
+
                 this.alertsTriggered.add(alertId);
 
-                // Auto-remove after 10 seconds
+                // Auto-remove after 30 minutes
                 setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 150);
-                }, 10000);
-            }    
+                    alertElement.remove();
+                    this.alertsTriggered.delete(alertId);
+                }, 30 * 60 * 1000);
+            }
+
+            clearAllAlerts() {
+                alertContainer.innerHTML = '';
+                this.alertsTriggered.clear();
+            }
         }
 
         const alertManager = new AlertManager();
 
-        // Initialize expiry date BY TEJAS BHATALE
-       initializeExpiryDate();  
+        // Initialize expiry date
+        initializeExpiryDate();
+
+        // Clear all alerts
+        clearAlertsBtn.addEventListener('click', () => {
+            alertManager.clearAllAlerts();
+        });
 
         // Fetch NSE cookies (required for API access)
         async function fetchNSECookies() {
             try {
                 const response = await axios.get('https://www.nseindia.com', {
-                    headers: {}
-                        // 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                       // 'Accept-Language': 'en-US,en;q=0.9'
-                
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept-Language': 'en-US,en;q=0.9'
+                    }
                 });
                 nseCookies = response.headers['set-cookie'].join('; ');
                 return nseCookies;
@@ -450,12 +590,46 @@
         // Fetch real India VIX data from NSE
         async function fetchIndiaVIX() {
             try {
-                const response = await axios.get('/api/option-chain?symbol=INDIAVIX&expiry=2025-04-24');
-                const vixValue = parseFloat(response.data[0]?.marketPrice || 0);
+                if (!nseCookies) {
+                    await fetchNSECookies();
+                    if (!nseCookies) {
+                        throw new Error("Failed to get NSE cookies");
+                    }
+                }
+
+                const response = await axios.get('https://www.nseindia.com/api/option-chain-indices?symbol=INDIAVIX', {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Cookie': nseCookies
+                    }
+                });
+
+                const vixValue = parseFloat(response.data.records.underlyingValue);
+
+                // Set VIX display with appropriate class based on threshold
+                indiaVIXDisplay.textContent = vixValue.toFixed(2);
+                indiaVIXDisplay.className = 'market-data-value ' +
+                    (vixValue > VIX_THRESHOLDS.HIGH ? 'vix-high' :
+                     vixValue > VIX_THRESHOLDS.MEDIUM ? 'vix-medium' : 'vix-low');
+
                 return vixValue;
             } catch (error) {
-                console.error("Error fetching India VIX fallback:", error);
-                return null;
+                console.error("Error fetching India VIX from NSE:", error);
+                // Fallback to Yahoo Finance if NSE fails
+                try {
+                    const yahooResponse = await axios.get('https://query1.finance.yahoo.com/v8/finance/chart/%5EINDIAVIX');
+                    const vixValue = parseFloat(yahooResponse.data.chart.result[0].meta.regularMarketPrice);
+                    indiaVIXDisplay.textContent = vixValue.toFixed(2);
+                    indiaVIXDisplay.className = 'market-data-value ' +
+                        (vixValue > VIX_THRESHOLDS.HIGH ? 'vix-high' :
+                         vixValue > VIX_THRESHOLDS.MEDIUM ? 'vix-medium' : 'vix-low');
+                    return vixValue;
+                } catch (yahooError) {
+                    console.error("Error fetching India VIX from Yahoo:", yahooError);
+                    indiaVIXDisplay.textContent = 'Error';
+                    return null;
+                }
             }
         }
 
@@ -675,39 +849,6 @@
             });
         }
 
-        // Update last update time
-        function updateLastUpdateTime() {
-            const now = new Date();
-            lastUpdateTime = now;
-            currentTimeDisplay.textContent = now.toLocaleTimeString();
-            lastUpdateBadge.textContent = `Last Update: ${now.toLocaleTimeString()}`;
-        }
-
-        // Update metrics UI
-        function updateMetricsUI(metrics, marketPrice) {
-            // Update market data header
-            marketPriceDisplay.textContent = marketPrice.toFixed(2);
-            pcrOIDisplay.textContent = metrics.pcrOI.toFixed(2);
-
-            // Update metrics container
-            document.getElementById('maxCallOI').textContent = metrics.maxCallOI.toLocaleString();
-            document.getElementById('maxCallOIStrike').textContent = metrics.maxCallOIStrike;
-            document.getElementById('maxCallOIPctChange').textContent = formatPercentage(metrics.maxCallOIPctChange);
-            document.getElementById('maxPutOI').textContent = metrics.maxPutOI.toLocaleString();
-            document.getElementById('maxPutOIStrike').textContent = metrics.maxPutOIStrike;
-            document.getElementById('maxPutOIPctChange').textContent = formatPercentage(metrics.maxPutOIPctChange);
-            document.getElementById('pcrOI').textContent = metrics.pcrOI.toFixed(2);
-            document.getElementById('pcrOIPctChange').textContent = formatPercentage(metrics.pcrOIPctChange);
-            document.getElementById('indiaVIX').textContent = metrics.indiaVIX ? metrics.indiaVIX.toFixed(2) : '-';
-            document.getElementById('indiaVIXPctChange').textContent = formatPercentage(metrics.indiaVIXPctChange);
-
-            // Set color for changes
-            document.getElementById('maxCallOIPctChange').className = 'metric-value ' + getChangeClass(metrics.maxCallOIPctChange);
-            document.getElementById('maxPutOIPctChange').className = 'metric-value ' + getChangeClass(metrics.maxPutOIPctChange);
-            document.getElementById('pcrOIPctChange').className = 'metric-value ' + getChangeClass(metrics.pcrOIPctChange);
-            document.getElementById('indiaVIXPctChange').className = 'metric-value ' + getChangeClass(metrics.indiaVIXPctChange);
-        }
-
         // Initialize/update OI trend chart
         function updateOITrendChart() {
             const ctx = document.getElementById('oiTrendChart').getContext('2d');
@@ -876,11 +1017,15 @@
 
         // Main function to fetch and process data
         async function autoFetchData() {
+            if (isFetching) return;
+            isFetching = true;
+
             const asset = document.getElementById("asset").value;
             const expiry = document.getElementById("expiry").value;
 
             if (!asset || !expiry) {
                 alert("Please select an asset and expiry date.");
+                isFetching = false;
                 return;
             }
 
@@ -892,6 +1037,7 @@
                 sessionStartTime = new Date();
                 previousMetrics = null;
                 previousIndiaVIX = null;
+                lastMarketPrice = null;
             }
 
             // Start new session if needed
@@ -935,17 +1081,47 @@
 
                 // Calculate metrics
                 const currentMetrics = calculateMetrics(dataWithChanges, previousMetrics, indiaVIX, previousIndiaVIX);
+                updateMetricsUI(currentMetrics, marketPrice);          //added
 
                 // Check for alerts
                 const alerts = alertManager.checkThresholds(dataWithChanges, currentMetrics);
                 alerts.forEach(alert => alertManager.showAlert(alert));
+// Update metrics UI
+function updateMetricsUI(metrics, marketPrice) {
+    // Update market data header
+    marketPriceDisplay.textContent = marketPrice.toFixed(2);
+    pcrOIDisplay.textContent = metrics.pcrOI.toFixed(2);
 
+    // Update metrics section
+    document.getElementById("maxCallOI").textContent = metrics.maxCallOI.toLocaleString();
+    document.getElementById("maxCallOIStrike").textContent = metrics.maxCallOIStrike;
+    document.getElementById("maxCallOIPctChange").textContent = formatPercentage(metrics.maxCallOIPctChange);
+
+    document.getElementById("maxPutOI").textContent = metrics.maxPutOI.toLocaleString();
+    document.getElementById("maxPutOIStrike").textContent = metrics.maxPutOIStrike;
+    document.getElementById("maxPutOIPctChange").textContent = formatPercentage(metrics.maxPutOIPctChange);
+
+    document.getElementById("pcrOI").textContent = metrics.pcrOI.toFixed(2);
+    document.getElementById("pcrOIPctChange").textContent = formatPercentage(metrics.pcrOIPctChange);
+
+    document.getElementById("indiaVIX").textContent = metrics.indiaVIX.toFixed(2);
+    document.getElementById("indiaVIXPctChange").textContent = formatPercentage(metrics.indiaVIXPctChange);
+
+    // Add color coding based on values
+    const pcrOIElem = document.getElementById("pcrOI");
+    pcrOIElem.className = "metric-value " + (metrics.pcrOI > 1.5 ? "oi-change-negative" : metrics.pcrOI < 0.7 ? "oi-change-positive" : "");
+
+    const vixElem = document.getElementById("indiaVIX");
+    vixElem.className = "metric-value " +
+        (metrics.indiaVIX > VIX_THRESHOLDS.HIGH ? "vix-high" :
+         metrics.indiaVIX > VIX_THRESHOLDS.MEDIUM ? "vix-medium" : "vix-low");
+}
                 // Update UI
                 renderTable(dataWithChanges, marketPrice);
                 updateMetricsUI(currentMetrics, marketPrice);
                 updateOITrendChart();
                 updatePriceTrendChart();
-                updateLastUpdateTime();
+                updateTimeDisplays(marketPrice);
 
                 exportExcelBtn.disabled = false;
                 exportPDFBtn.disabled = false;
@@ -957,6 +1133,7 @@
                 console.error("Error in autoFetchData:", error);
             } finally {
                 loadingDiv.style.display = "none";
+                isFetching = false;
             }
         }
 
@@ -1157,7 +1334,7 @@
 
             // Start new interval (2 minutes)
             autoFetchData();
-            intervalId = setInterval(autoFetchData, 2* 60 * 1000);
+            intervalId = setInterval(autoFetchData, 2 * 60 * 1000);
 
             stopFetchBtn.disabled = false;
             exportExcelBtn.disabled = true;
