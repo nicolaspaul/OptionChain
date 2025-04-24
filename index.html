@@ -370,6 +370,12 @@
         let lastMarketPrice = null;
         let isFetching = false;
 
+        //changed at 24 april
+        fetch('/api/option-chain')
+            .then(res => res.json())
+            .then(data => console.log(data))
+            .catch(err => console.error('Frontend fetch error:', err));
+        
         // VIX Thresholds
         const VIX_THRESHOLDS = {
             HIGH: 20,    // Above this is considered high volatility
