@@ -495,7 +495,7 @@
 
         async function fetchIndiaVIX() {
             try {
-                const response = await axios.get('https://kingfisher-kcfv.onrender.com/api/india-vix');
+                const response = await axios.get('https://optionchain-jtbl.onrender.com');
                 const vixValue = parseFloat(response.data.vix);
                 
                 // Set VIX display with appropriate class based on threshold
@@ -527,7 +527,7 @@
 
         async function fetchData(asset, expiry) {
             try {
-                const response = await axios.get(`https://kingfisher-kcfv.onrender.com/api/option-chain?symbol=${asset}&expiry=${expiry}`);
+                const response = await axios.get(`https://optionchain-jtbl.onrender.com/api/option-chain?symbol=${asset}&expiry=${expiry}`);
                 return response.data;
             } catch (error) {
                 console.error("Error fetching data:", error);
