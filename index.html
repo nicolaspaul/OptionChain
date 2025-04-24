@@ -608,7 +608,7 @@
         // Fetch data from API
         async function fetchData(asset, expiry) {
             try {
-                const response = await axios.get(`https://nseindia.com/option-chain/api/option-chain?symbol=${asset}&expiry=${expiry}`);
+                const response = await axios.get(`/api/option-chain?symbol=${asset}&expiry=${expiry}`);
                 return response.data;
             } catch (error) {
                 console.error("Error fetching data:", error);
