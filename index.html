@@ -297,10 +297,10 @@
             let expiryDate = new Date(today);
 
             // Find next Thursday (NIFTY weekly expiry)
-            expiryDate.setDate(today.getDate() + ((4 - today.getDay() + 7) % 7));
-            if (expiryDate <= today) {
-                expiryDate.setDate(expiryDate.getDate() + 7);
-            }
+            // expiryDate.setDate(today.getDate() + ((4 - today.getDay() + 7) % 7));
+            // if (expiryDate <= today) {
+            //     expiryDate.setDate(expiryDate.getDate() + 7);
+            // }
 
             // Format as YYYY-MM-DD for date input
             const formattedDate = expiryDate.toISOString().split('T')[0];
@@ -422,19 +422,19 @@
                     toast.classList.remove('show');
                     setTimeout(() => toast.remove(), 150);
                 }, 10000);
-            }
+            }    
         }
 
         const alertManager = new AlertManager();
 
-        // Initialize expiry date
-       // initializeExpiryDate();  BY TEJAS BHATALE
+        // Initialize expiry date BY TEJAS BHATALE
+       initializeExpiryDate();  
 
         // Fetch NSE cookies (required for API access)
         async function fetchNSECookies() {
             try {
                 const response = await axios.get('https://www.nseindia.com', {
-                    headers: {'Cookie': nseCookies}
+                    headers: {}
                         // 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                        // 'Accept-Language': 'en-US,en;q=0.9'
                 
@@ -447,125 +447,30 @@
             }
         }
 
-        // Fetch real India VIX data from NSE - 24 april
-        // async function fetchIndiaVIX() {
-        //     try {
-        //         if (!nseCookies) {
-        //             await fetchNSECookies();
-        //             if (!nseCookies) {
-        //                 throw new Error("Failed to get NSE cookies");
-        //             }
-        //         }
-
-        //         const response = await axios.get('https://www.nseindia.com/api/option-chain-indices?symbol=INDIAVIX', {
-        //             headers: {
-        //                 // 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        //                 'Accept-Language': 'en-US,en;q=0.9',
-        //                 'Cookie': nseCookies
-        //             }
-        //         });
-
-        //         const vixValue = parseFloat(response.data.records.underlyingValue);
-
-        //         // Set VIX display with appropriate class based on threshold
-        //         indiaVIXDisplay.textContent = vixValue.toFixed(2);
-        //         indiaVIXDisplay.className = 'market-data-value ' +
-        //             (vixValue > VIX_THRESHOLDS.HIGH ? 'vix-high' :
-        //              vixValue > VIX_THRESHOLDS.MEDIUM ? 'vix-medium' : 'vix-low');
-
-        //         return vixValue;
-        //     } catch (error) {
-        //         console.error("Error fetching India VIX from NSE:", error);
-        //         // Fallback to Yahoo Finance if NSE fails
-        //         try {
-        //             const yahooResponse = await axios.get('https://query1.finance.yahoo.com/v8/finance/chart/%5EINDIAVIX');
-        //             const vixValue = parseFloat(yahooResponse.data.chart.result[0].meta.regularMarketPrice);
-        //             indiaVIXDisplay.textContent = vixValue.toFixed(2);
-        //             indiaVIXDisplay.className = 'market-data-value ' +
-        //                 (vixValue > VIX_THRESHOLDS.HIGH ? 'vix-high' :
-        //                  vixValue > VIX_THRESHOLDS.MEDIUM ? 'vix-medium' : 'vix-low');
-        //             return vixValue;
-        //         } catch (yahooError) {
-        //             console.error("Error fetching India VIX from Yahoo:", yahooError);
-        //             indiaVIXDisplay.textContent = 'Error';
-        //             return null;
-        //         }
-        //     }
-        // }
-
+        // Fetch real India VIX data from NSE
         async function fetchIndiaVIX() {
             try {
-                const response = await axios.get('https://optionchain-jtbl.onrender.com');
-                const vixValue = parseFloat(response.data.vix);
-                
-                // Set VIX display with appropriate class based on threshold
-                indiaVIXDisplay.textContent = vixValue.toFixed(2);
-                indiaVIXDisplay.className = 'market-data-value ' +
-                    (vixValue > VIX_THRESHOLDS.HIGH ? 'vix-high' :
-                     vixValue > VIX_THRESHOLDS.MEDIUM ? 'vix-medium' : 'vix-low');
-                
+                const response = await axios.get('/api/option-chain?symbol=INDIAVIX&expiry=2025-04-24');
+                const vixValue = parseFloat(response.data[0]?.marketPrice || 0);
                 return vixValue;
             } catch (error) {
-                console.error("Error fetching India VIX:", error);
-                indiaVIXDisplay.textContent = 'Error';
+                console.error("Error fetching India VIX fallback:", error);
                 return null;
-            
             }
         }
-        
-        // Fetch data from API - 24 april
-        // async function fetchData(asset, expiry) {
-        //     try {
-        //         const response = await axios.get(`http://localhost:3000/api/option-chain?symbol=${asset}&expiry=${expiry}`);
-        //         return response.data;
-        //     } catch (error) {
-        //         console.error("Error fetching data:", error);
-        //         alert("Failed to fetch data. Please check the API.");
-        //         return [];
-        //     }
-        // }
 
+        // Fetch data from API
         async function fetchData(asset, expiry) {
             try {
-                const response = await axios.get(`https://optionchain-jtbl.onrender.com/api/option-chain?symbol=${asset}&expiry=${expiry}`);
+                const response = await axios.get(`/api/option-chain?symbol=${asset}&expiry=${expiry}`);
                 return response.data;
             } catch (error) {
                 console.error("Error fetching data:", error);
-                
-                // Show user-friendly error message
-                if (error.response && error.response.status === 503) {
-                    showToast("Session expired", "Please refresh the page to continue", "error");
-                } else {
-                    showToast("Connection Error", "Failed to fetch data. Please try again.", "error");
-                }
+                alert("Failed to fetch data. Please check the API.");
                 return [];
             }
         }
 
-        // Add this helper function for showing error toasts
-        function showToast(title, message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast fade show alert-toast toast-${type}`;
-            toast.role = 'alert';
-            toast.innerHTML = `
-            <div class="toast-header">
-            <strong class="mr-auto">${title}</strong>
-            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">
-            <span aria-hidden="true">&times;</span>
-            </button>
-            </div>
-            <div class="toast-body">${message}</div>
-            `;
-            
-            alertContainer.appendChild(toast);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 150);
-            }, 5000);
-        }
-        
         // Filter to get top 5 strikes above and below market price
         function filterTopStrikes(data, marketPrice) {
             if (!data || data.length === 0) return [];
