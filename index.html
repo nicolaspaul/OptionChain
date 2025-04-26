@@ -1184,26 +1184,26 @@ function updateMetricsUI(metrics, marketPrice) {
         (metrics.indiaVIX > VIX_THRESHOLDS.HIGH ? "vix-high" :
          metrics.indiaVIX > VIX_THRESHOLDS.MEDIUM ? "vix-medium" : "vix-low");
 }
-                // Update UI
-                renderTable(dataWithChanges, marketPrice);
-                updateMetricsUI(currentMetrics, marketPrice);
-                updateOITrendChart();
-                updatePriceTrendChart();
-                updateTimeDisplays(marketPrice);
+        //         // Update UI
+        //         renderTable(dataWithChanges, marketPrice);
+        //         updateMetricsUI(currentMetrics, marketPrice);
+        //         updateOITrendChart();
+        //         updatePriceTrendChart();
+        //         updateTimeDisplays(marketPrice);
 
-                exportExcelBtn.disabled = false;
-                exportPDFBtn.disabled = false;
+        //         exportExcelBtn.disabled = false;
+        //         exportPDFBtn.disabled = false;
 
-                // Store current metrics and India VIX for next comparison
-                previousMetrics = currentMetrics;
-                previousIndiaVIX = indiaVIX;
-            } catch (error) {
-                console.error("Error in autoFetchData:", error);
-            } finally {
-                loadingDiv.style.display = "none";
-                isFetching = false;
-            }
-        }
+        //         // Store current metrics and India VIX for next comparison
+        //         previousMetrics = currentMetrics;
+        //         previousIndiaVIX = indiaVIX;
+        //     } catch (error) {
+        //         console.error("Error in autoFetchData:", error);
+        //     } finally {
+        //         loadingDiv.style.display = "none";
+        //         isFetching = false;
+        //     }
+        // }
 
         // Export data to Excel
         function exportToExcel() {
