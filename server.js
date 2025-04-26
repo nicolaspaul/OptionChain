@@ -30,7 +30,7 @@ app.get('/api/option-chain', async (req, res) => {
 
   try {
     // Target NSE URL to fetch
-    const nseUrl = `https://www.nseindia.com/api/option-chain-indices?symbol=${symbol}`;
+    const nseUrl = `https://www.nseindia.com/api/option-chain-indices?symbol=${asset}`;
 
     // Call Lambda Proxy
     const response = await axios.get(LAMBDA_PROXY_URL, {
