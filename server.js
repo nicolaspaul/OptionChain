@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname)));
 
 // Your Lambda Proxy URL (replace with your actual API Gateway URL)
-const LAMBDA_PROXY_URL = 'https://8ti42907y8.execute-api.eu-north-1.amazonaws.com/lambda-proxy';
+const LAMBDA_PROXY_URL = 'https://3ocgqzdxhl.execute-api.ap-south-1.amazonaws.com/proxy';
 
 // ScraperAPI Key (from your Lambda)
 const SCRAPER_API_KEY = '07b639064e37bcc7e9e84666b6a2a33e'; // Replace if needed
@@ -30,7 +30,7 @@ app.get('/api/option-chain', async (req, res) => {
 
   try {
     // Target NSE URL to fetch
-    const nseUrl = `https://www.nseindia.com/api/option-chain-indices?symbol=${asset}`;
+    const nseUrl = `https://www.nseindia.com/api/option-chain-indices?symbol=${asset}&expiry=${expiry}`;
 
     // Call Lambda Proxy
     const response = await axios.get(LAMBDA_PROXY_URL, {
