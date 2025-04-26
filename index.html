@@ -370,17 +370,17 @@
         let lastMarketPrice = null;
         let isFetching = false;
 
-        //changed at 24 april
-        fetch('/api/option-chain')
-            .then(res => res.json())
-            .then(data => console.log(data))
-            .catch(err => console.error('Frontend fetch error:', err));
+        //changed at 26 april
+        // fetch('/api/option-chain')
+        //     .then(res => res.json())
+        //     .then(data => console.log(data))
+        //     .catch(err => console.error('Frontend fetch error:', err));
         
         // VIX Thresholds
-        // const VIX_THRESHOLDS = {
-        //     HIGH: 20,    // Above this is considered high volatility
-        //     MEDIUM: 15   // Between 15-20 is medium volatility
-        // };
+        const VIX_THRESHOLDS = {
+            HIGH: 20,    // Above this is considered high volatility
+            MEDIUM: 15   // Between 15-20 is medium volatility
+        };
 
 // <!--        // Market hours (in IST)-->
 // <!--        const MARKET_HOURS = {-->
@@ -391,6 +391,13 @@
 // <!--            POST_CLOSE: 15.31     // 3:31 PM-->
 // <!--        };-->
 
+        // Proxy configuration
+        const PROXY_CONFIG = {
+            BASE_URL: 'https://8ti42907y8.execute-api.eu-north-1.amazonaws.com',
+            SCRAPER_API_KEY: '07b639064e37bcc7e9e84666b6a2a33e', // Replace with your actual key
+            NSE_BASE_URL: 'https://www.nseindia.com'
+        };
+        
         // DOM elements
         const dataForm = document.getElementById("dataForm");
         const stopFetchBtn = document.getElementById("stopFetch");
@@ -592,44 +599,98 @@
                 return null;
             }
         }
-
-        // Fetch real India VIX data from NSE
-        // async function fetchIndiaVIX() {
-        //     try {
-        //         const response = await axios.get('/api/option-chain?symbol=INDIAVIX&expiry=2025-04-24');
-        //         const vixValue = parseFloat(response.data[0]?.marketPrice || 0);
-        //         return vixValue;
-        //     } catch (error) {
-        //         console.error("Error fetching India VIX fallback:", error);
-        //         return null;
-        //     }
-        // }
         
-        // Fetch data from API
-        // const BASE_URL = "https://optionchain-jtbl.onrender.com";
-
+        // Fetch data through AWS Lambda proxy
         async function fetchData(asset, expiry) {
-             try {
-                 const response = await axios.get(`${BASE_URL}/api/option-chain?symbol=${asset}&expiry=${expiry}`);
-                 return response.data;
-             } catch (error) {
-                 console.error("Error fetching data:", error);
-                 alert("Failed to fetch data. Please check the API.");
-                 return [];
-             }
-         }
+            try {
+                const proxyUrl = `${PROXY_CONFIG.BASE_URL}/lambda-proxy`;
+                const targetUrl = `${PROXY_CONFIG.NSE_BASE_URL}/api/option-chain-indices?symbol=${asset}`;
+                
+                const response = await axios.get(proxyUrl, {
+                    params: {
+                        url: targetUrl,
+                        api_key: PROXY_CONFIG.SCRAPER_API_KEY
+                    },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.data || !response.data.records) {
+                    throw new Error("Invalid data format received from proxy");
+                }
+
+                // Process the data to match your expected format
+                const records = response.data.records;
+                const marketPrice = records.underlyingValue;
+                const expiryData = records.data.find(d => d.expiryDate === expiry);
+                
+                if (!expiryData) {
+                    throw new Error(`No data found for expiry ${expiry}`);
+                }
+
+                // Transform the data to your expected format
+                const formattedData = expiryData.CE.map((ce, index) => {
+                    const pe = expiryData.PE[index];
+                    return {
+                        strikePrice: ce.strikePrice,
+                        marketPrice: marketPrice,
+                        call: {
+                            LTP: ce.lastPrice,
+                            OI: ce.openInterest,
+                            OIChange: ce.changeinOpenInterest,
+                            OIPctChange: ce.pchangeinOpenInterest
+                        },
+                        put: {
+                            LTP: pe.lastPrice,
+                            OI: pe.openInterest,
+                            OIChange: pe.changeinOpenInterest,
+                            OIPctChange: pe.pchangeinOpenInterest
+                        }
+                    };
+                });
+
+                return formattedData;
+            } catch (error) {
+                console.error("Error fetching data through proxy:", error);
+                alert("Failed to fetch data. Please check the connection.");
+                return [];
+            }
+        
+        // Fetch India VIX through proxy
+        async function fetchIndiaVIX() {
+            try {
+                const proxyUrl = `${PROXY_CONFIG.BASE_URL}/lambda-proxy`;
+                const targetUrl = `${PROXY_CONFIG.NSE_BASE_URL}/api/india-vix`;
+                
+                const response = await axios.get(proxyUrl, {
+                    params: {
+                        url: targetUrl,
+                        api_key: PROXY_CONFIG.SCRAPER_API_KEY
+                    }
+                });
+
+                if (response.data && response.data.data && response.data.data.length > 0) {
+                    return parseFloat(response.data.data[0].indiaVix);
+                }
+                return null;
+            } catch (error) {
+                console.error("Error fetching India VIX:", error);
+                return null;
+            }
+        }
 
         // Lambda and API gateway edition - 26 april
-        const lambdaProxyUrl = 'https://8ti42907y8.execute-api.eu-north-1.amazonaws.com/';
+        // const lambdaProxyUrl = 'https://8ti42907y8.execute-api.eu-north-1.amazonaws.com/';
         
-        fetch(`${lambdaProxyUrl}?url=https://www.nseindia.com/your-api-endpoint`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);  // Process the data from NSE India (via ScraperAPI)
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+        // fetch(`${lambdaProxyUrl}?url=https://www.nseindia.com/your-api-endpoint`)
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         console.log(data);  // Process the data from NSE India (via ScraperAPI)
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //     });
 
         // Filter to get top 5 strikes above and below market price
         function filterTopStrikes(data, marketPrice) {
@@ -1001,7 +1062,7 @@
             });
         }
 
-        // Main function to fetch and process data
+        // Main function to fetch and process data (updated to use new functions)
         async function autoFetchData() {
             if (isFetching) return;
             isFetching = true;
@@ -1037,7 +1098,7 @@
                 // Fetch option chain data and India VIX in parallel
                 const [newData, indiaVIX] = await Promise.all([
                     fetchData(asset, expiry),
-                    // fetchIndiaVIX()
+                    fetchIndiaVIX()
                 ]);
 
                 if (newData.length === 0) {
@@ -1067,11 +1128,32 @@
 
                 // Calculate metrics
                 const currentMetrics = calculateMetrics(dataWithChanges, previousMetrics, indiaVIX, previousIndiaVIX);
-                updateMetricsUI(currentMetrics, marketPrice);          //added
+                updateMetricsUI(currentMetrics, marketPrice);
 
                 // Check for alerts
                 const alerts = alertManager.checkThresholds(dataWithChanges, currentMetrics);
                 alerts.forEach(alert => alertManager.showAlert(alert));
+
+                // Update UI
+                renderTable(dataWithChanges, marketPrice);
+                updateOITrendChart();
+                updatePriceTrendChart();
+                updateTimeDisplays(marketPrice);
+
+                exportExcelBtn.disabled = false;
+                exportPDFBtn.disabled = false;
+
+                // Store current metrics and India VIX for next comparison
+                previousMetrics = currentMetrics;
+                previousIndiaVIX = indiaVIX;
+            } catch (error) {
+                console.error("Error in autoFetchData:", error);
+            } finally {
+                loadingDiv.style.display = "none";
+                isFetching = false;
+            }
+        }
+            
 // Update metrics UI
 function updateMetricsUI(metrics, marketPrice) {
     // Update market data header
