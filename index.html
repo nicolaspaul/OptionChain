@@ -393,7 +393,7 @@
 
         // Proxy configuration
         const PROXY_CONFIG = {
-            BASE_URL: 'https://8ti42907y8.execute-api.eu-north-1.amazonaws.com',
+            BASE_URL: 'https://3ocgqzdxhl.execute-api.ap-south-1.amazonaws.com',
             SCRAPER_API_KEY: '07b639064e37bcc7e9e84666b6a2a33e', // Replace with your actual key
             NSE_BASE_URL: 'https://www.nseindia.com'
         };
@@ -604,8 +604,8 @@
         // Fetch data through AWS Lambda proxy
         async function fetchData(asset, expiry) {
             try {
-                const proxyUrl = `${PROXY_CONFIG.BASE_URL}/lambda-proxy`;
-                const targetUrl = `${PROXY_CONFIG.NSE_BASE_URL}/api/option-chain-indices?symbol=${asset}`;
+                const proxyUrl = `${PROXY_CONFIG.BASE_URL}/proxy`;
+                const targetUrl = `${PROXY_CONFIG.NSE_BASE_URL}/api/option-chain-indices?symbol=${asset}&expiry=${expiry}`;
                 
                 const response = await axios.get(proxyUrl, {
                     params: {
@@ -662,7 +662,7 @@
         // Fetch India VIX through proxy
         async function fetchIndiaVIX() {
             try {
-                const proxyUrl = `${PROXY_CONFIG.BASE_URL}/lambda-proxy`;
+                const proxyUrl = `${PROXY_CONFIG.BASE_URL}/proxy`;
                 const targetUrl = `${PROXY_CONFIG.NSE_BASE_URL}/api/india-vix`;
                 
                 const response = await axios.get(proxyUrl, {
